@@ -1,0 +1,61 @@
+About
+=====
+
+Some virtualization systems like to prefer SDL as the
+default option for spawning instances for viewing the
+guests as they boot up. This is xen's default. There is
+an issue with SDL and using sudo to create new guests
+though and this example program demonstrates the issue.
+
+The purpose of this simple program is to demonstrate and
+test the issue of using sudo and SDL and look for the best
+more reasonable solution. A respective bug report was opened
+on libsdl.org:
+
+https://bugzilla.libsdl.org/show_bug.cgi?id=2446
+
+Hope is that evolution of this sample code can be used to
+address this issue in other programs that run into the same
+corner case issue.
+
+Build
+=====
+
+make
+
+Usage
+=====
+
+As a regular user you see no issues (note: this will full screen,
+and its not easy to recover):
+
+	./sdl1
+	./sdl2
+
+You can trigger the same observed issue as seen on xen when creating
+a guest with 'xl create /etc/xen/foo.hvm' by running this program as
+root as well:
+
+	sudo ./sdl2
+	sudo ./sdl2
+
+This will fail on Linux with:
+
+Error while initializing SDL:  No available video device
+
+To account for this upstream qemu/ui/sdl.c sets the default video
+driver to x11 with:
+
+setenv("SDL_VIDEODRIVER", "x11", 0);
+
+It then make this note:
+
+/* on Linux, SDL may use fbcon|directfb|svgalib when run without            
+ * accessible $DISPLAY to open X11 window.  This is often the case          
+ * when qemu is run using sudo.  But in this case, and when actually        
+ * run in X11 environment, SDL fights with X11 for the video card,          
+ * making current display unavailable, often until reboot.                  
+ * So make x11 the default SDL video driver if this variable is unset.      
+ * This is a bit hackish but saves us from bigger problem.                  
+ * Maybe it's a good idea to fix this in SDL instead.                       
+ */
